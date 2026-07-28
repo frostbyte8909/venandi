@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO solves (team_id, level_id, timestamp)\n                   VALUES (?1, ?2, ?3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "619ddcf1e22e3bd3acbdf33b61afeea240ee0c2771a6154cf1b4f11682715c4b"
+}

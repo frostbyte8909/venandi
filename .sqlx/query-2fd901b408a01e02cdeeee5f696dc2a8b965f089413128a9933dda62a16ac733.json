@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO teams (id, name, join_code, password_hash, created_at)\n                   VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "2fd901b408a01e02cdeeee5f696dc2a8b965f089413128a9933dda62a16ac733"
+}

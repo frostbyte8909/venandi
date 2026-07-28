@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT score FROM teams WHERE id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "score",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5852f1c6731744a0d4d68784c4a085d389f6a0d7fb1be30289a572023c14f3b3"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT level_id as \"level_id!\", timestamp as \"timestamp!\" FROM solves WHERE team_id = ?1 ORDER BY timestamp ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "level_id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "timestamp!",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "6f590d05bca9cd6467a9b6954e08f72ed69ba122efc9050de813d0ae3bd625bc"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO users (id, email, password_hash, role, created_at)\n                   VALUES (?1, ?2, ?3, 'admin', ?4)\n                   ON CONFLICT(email) DO UPDATE SET role = 'admin', password_hash = ?3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "c7a3c9c414c242f80d10fdcc36cfaa2fffabe69d8ffc8b2cf933d204c0544e88"
+}

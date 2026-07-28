@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) as cnt FROM solves WHERE team_id = ?1 AND level_id = ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "cnt",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3ad62f2cd940fb30f8ed9b9c5d47b6d5f369345e5e00a1e65f945a597ebd9838"
+}

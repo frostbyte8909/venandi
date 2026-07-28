@@ -1,0 +1,29 @@
+{
+  "event": {
+    "name": "Venandi Main Event",
+    "ctf_mode": true
+  },
+  "levels": [
+    {
+      "id": "lvl_1",
+      "points": 100,
+      "unlock_condition": "START",
+      "answers": ["flag{static_example}"],
+      "dynamic_flag": false
+    },
+    {
+      "id": "lvl_2",
+      "points": 200,
+      "unlock_condition": "lvl_1",
+      "answers": [],
+      "dynamic_flag": true
+    },
+    {
+      "id": "lvl_boss",
+      "points": 500,
+      "unlock_condition": "(lvl_1 AND lvl_2) OR team_score >= 300",
+      "answers": ["final_boss_answer"],
+      "dynamic_flag": false
+    }
+  ]
+}

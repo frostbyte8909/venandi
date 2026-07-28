@@ -1,1 +1,14 @@
 /target
+
+# Secrets — never commit
+.env
+
+# SQLite database files
+*.db
+*.db-wal
+*.db-shm
+
+# Static assets (managed by event organizers, not the engine)
+/static/
+
+# NOTE: .sqlx/ is intentionally NOT ignored — commit it for SQLX_OFFLINE CI builds
