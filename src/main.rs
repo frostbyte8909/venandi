@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     info!("╔════════════════════════════════════╗");
-    info!("║      Venandi v3.1 Booting...       ║");
+    info!("║   Venandi v{}  Booting...       ║", env!("CARGO_PKG_VERSION"));
     info!("╚════════════════════════════════════╝");
 
     // ── 3. Parse hunt.json ────────────────────────────────────────────────────
