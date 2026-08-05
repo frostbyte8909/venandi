@@ -1,37 +1,69 @@
 [triggers.correct_flag]
 variants = [
-    "pog. flag accepted.",
-    "finally. took you long enough.",
-    "we checked twice. somehow, you got it right.",
-    "first try? (we know it wasn't)."
+    "correct. don't celebrate yet, there are more.",
+    "flag accepted. took you long enough.",
+    "somehow, that worked. carry on.",
+    "yep. don't get comfortable.",
+    "verified. your team's still mid overall though.",
+    "ok that one was actually correct.",
+    "flag valid. one less reason to cry.",
+    "accepted. still bottom 5 on the board.",
+    "you got one. ten more to go. skill issue.",
+    "correct. we're as surprised as you are."
 ]
 
 [triggers.near_miss]
 variants = [
-    "you're close. painfully close.",
-    "one character off. agonizing, isn't it?",
-    "almost had it. try turning your brain on.",
-    "close! check for typos or rogue spaces."
+    "close. one typo away from touching grass.",
+    "your keyboard has a vendetta against you.",
+    "bro typed 'flg' instead of 'flag'. classic.",
+    "that's not it. check your spacebar.",
+    "painfully close. agonizingly mid.",
+    "you're cooked. one character cooked.",
+    "the flag exists. yours does not.",
+    "almost. go touch a keyboard first.",
+    "vim user detected: didn't save the last char.",
+    "so close that it's embarrassing. try again."
 ]
 
 [triggers.wrong_flag]
 variants = [
-    "not even in the same universe.",
-    "bro just guessed and hoped.",
-    "nice try. skill issue though.",
-    "error 404: correct answer not found."
+    "bro really just guessed.",
+    "not even in the right zip code.",
+    "skill issue: maximum severity.",
+    "did you google that? because google was wrong.",
+    "that flag does not exist in this universe.",
+    "hallucinating harder than a fine-tuned LLM.",
+    "error 404: correct answer not found in your brain.",
+    "stop. breathe. think. (in that order).",
+    "you dropped the table. there was no table.",
+    "bro asked chatgpt and submitted the output directly."
 ]
 
 [triggers.canary_triggered]
 variants = [
-    "busted. enjoying that AI hallucination?",
-    "honeypot touched. enjoy the ban hammer.",
-    "caught in 4K."
+    "honeypot triggered. we know exactly what you used.",
+    "that flag was bait. you bit it.",
+    "AI-generated submission detected. embarrassing.",
+    "congratulations, you just got flagged. literally.",
+    "the disassembler lied to you and you believed it.",
+    "caught running strings on the binary. cooked.",
+    "your LLM hallucinated and you trusted it. tragic.",
+    "that flag was fake. your technique is also fake.",
+    "nice try. the flag was a trap. you are the trap.",
+    "admin dashboard just lit up. go explain yourself."
 ]
 
 [triggers.rate_limited]
 variants = [
-    "slow down cowboy.",
-    "your script is cooking your CPU. take a breath.",
-    "rate limit hit. touch grass for 10 seconds."
+    "slow down. your CPU is begging.",
+    "brute forcing a text box. bold strategy.",
+    "rate limited. the server is embarrassed for you.",
+    "touch grass. the endpoint will still be here.",
+    "you're not a script. stop acting like one.",
+    "10 requests in 2 seconds. seek help.",
+    "the flag isn't going to change, relax.",
+    "your internet is faster than your brain. fix that.",
+    "server said no. it meant it.",
+    "hammering submit won't make you smarter. proven."
 ]
