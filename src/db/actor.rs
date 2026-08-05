@@ -28,7 +28,9 @@ pub enum DbCommand {
     RecordSolve {
         team_id: Uuid,
         level_id: String,
+        /// Decayed point value, computed before dispatch.
         points: u32,
+        ip_address: Option<String>,
         first_blood_tx: oneshot::Sender<Result<bool, AppError>>,
     },
     WriteAuditLog {
@@ -43,6 +45,10 @@ pub enum DbCommand {
     },
     RevokeTokens {
         user_id: Uuid,
+    },
+    /// Sets the canary_triggered flag on a team. No JWT revocation.
+    FlagCanary {
+        team_id: Uuid,
     },
 }
 
@@ -134,6 +140,7 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
             team_id,
             level_id,
             points,
+            ip_address,
             first_blood_tx,
         } => {
             let team_id_str = team_id.to_string();
@@ -160,22 +167,13 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
                     match prior {
                         Ok(prior_row) => {
                             let insert_res = sqlx::query!(
-                                "INSERT INTO solves (team_id, level_id, timestamp) VALUES (?1, ?2, ?3)",
-                                team_id_str, level_id, now
+                                "INSERT INTO solves (team_id, level_id, timestamp, points_at_solve, ip_address) VALUES (?1, ?2, ?3, ?4, ?5)",
+                                team_id_str, level_id, now, points_i64, ip_address
                             ).execute(pool).await;
 
                             match insert_res {
                                 Ok(_) => {
-                                    let update_res = sqlx::query!(
-                                        "UPDATE teams SET score = score + ?1 WHERE id = ?2",
-                                        points_i64, team_id_str
-                                    ).execute(pool).await;
-
-                                    if let Err(e) = update_res {
-                                        let _ = first_blood_tx.send(Err(AppError::Database(e)));
-                                    } else {
-                                        let _ = first_blood_tx.send(Ok(prior_row.cnt == 0));
-                                    }
+                                    let _ = first_blood_tx.send(Ok(prior_row.cnt == 0));
                                 }
                                 Err(e) => {
                                     let _ = first_blood_tx.send(Err(AppError::Database(e)));
@@ -227,11 +225,22 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
             .execute(pool)
             .await?;
         }
+
         DbCommand::RevokeTokens { user_id } => {
             let user_id_str = user_id.to_string();
             sqlx::query!(
                 "UPDATE users SET token_version = token_version + 1 WHERE id = ?1",
                 user_id_str
+            )
+            .execute(pool)
+            .await?;
+        }
+
+        DbCommand::FlagCanary { team_id } => {
+            let team_id_str = team_id.to_string();
+            sqlx::query!(
+                "UPDATE teams SET canary_triggered = 1 WHERE id = ?1",
+                team_id_str
             )
             .execute(pool)
             .await?;

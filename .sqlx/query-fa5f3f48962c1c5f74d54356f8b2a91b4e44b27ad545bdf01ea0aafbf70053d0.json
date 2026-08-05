@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT ip_address as \"ip_address!\", team_ids as \"team_ids!\",\n                  earliest_solve as \"earliest_solve!\", latest_solve as \"latest_solve!\"\n           FROM (\n               SELECT\n                   ip_address,\n                   GROUP_CONCAT(DISTINCT team_id) as team_ids,\n                   MIN(timestamp) as earliest_solve,\n                   MAX(timestamp) as latest_solve\n               FROM solves\n               WHERE ip_address IS NOT NULL\n               GROUP BY ip_address\n               HAVING COUNT(DISTINCT team_id) > 1\n                  AND (JULIANDAY(MAX(timestamp)) - JULIANDAY(MIN(timestamp))) * 1440 <= 15\n           ) sub\n           ORDER BY earliest_solve DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "ip_address!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "team_ids!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "earliest_solve!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "latest_solve!",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "fa5f3f48962c1c5f74d54356f8b2a91b4e44b27ad545bdf01ea0aafbf70053d0"
+}

@@ -19,7 +19,7 @@ type Context<'a> = poise::Context<'a, BotData, Error>;
 /// Shows the top 10 teams and their scores.
 #[poise::command(slash_command)]
 pub async fn leaderboard(ctx: Context<'_>) -> Result<(), Error> {
-    let teams = get_leaderboard(&ctx.data().read_pool, 10).await?;
+    let teams = get_leaderboard(&ctx.data().read_pool, 10, None).await?;
 
     if teams.is_empty() {
         ctx.say("No teams have scored yet!").await?;

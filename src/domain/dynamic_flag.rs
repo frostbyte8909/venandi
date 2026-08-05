@@ -6,7 +6,7 @@ use uuid::Uuid;
 type HmacSha256 = Hmac<Sha256>;
 
 /// Generates HMAC-SHA256 dynamic flag.
-/// Formula: `HMAC-SHA256(server_secret, level_id + ":" + team_id)`
+/// Formula: HMAC-SHA256(server_secret, level_id + ":" + team_id)
 /// Output: lowercase 64-char hex string.
 pub fn generate_dynamic_flag(server_secret: &[u8], level_id: &str, team_id: Uuid) -> String {
     let mut mac =

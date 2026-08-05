@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT CAST(COUNT(*) + 1 AS INTEGER) as \"rank!: i64\"\n           FROM (\n               SELECT team_id, SUM(points_at_solve) as total\n               FROM solves GROUP BY team_id\n           ) scores\n           WHERE total > (\n               SELECT COALESCE(SUM(points_at_solve), 0)\n               FROM solves WHERE team_id = ?1\n           )",
+  "describe": {
+    "columns": [
+      {
+        "name": "rank!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fe7f79ef079beca1e52c514ce9854e05c8d54da553b543fbda043cf56112beed"
+}

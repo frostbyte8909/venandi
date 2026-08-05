@@ -1,0 +1,37 @@
+[triggers.correct_flag]
+variants = [
+    "pog. flag accepted.",
+    "finally. took you long enough.",
+    "we checked twice. somehow, you got it right.",
+    "first try? (we know it wasn't)."
+]
+
+[triggers.near_miss]
+variants = [
+    "you're close. painfully close.",
+    "one character off. agonizing, isn't it?",
+    "almost had it. try turning your brain on.",
+    "close! check for typos or rogue spaces."
+]
+
+[triggers.wrong_flag]
+variants = [
+    "not even in the same universe.",
+    "bro just guessed and hoped.",
+    "nice try. skill issue though.",
+    "error 404: correct answer not found."
+]
+
+[triggers.canary_triggered]
+variants = [
+    "busted. enjoying that AI hallucination?",
+    "honeypot touched. enjoy the ban hammer.",
+    "caught in 4K."
+]
+
+[triggers.rate_limited]
+variants = [
+    "slow down cowboy.",
+    "your script is cooking your CPU. take a breath.",
+    "rate limit hit. touch grass for 10 seconds."
+]

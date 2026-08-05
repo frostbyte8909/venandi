@@ -5,7 +5,9 @@ mod config;
 mod db;
 mod domain;
 mod error;
+mod rate_limit;
 mod state;
+mod toasts;
 
 use std::{
     collections::HashSet,
@@ -33,12 +35,13 @@ use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
 use crate::{
-    api::{auth, submit, ws},
+    api::{admin, auth, submit, ws},
     bot::{event_bus::spawn_event_bus, start_bot},
     config::HuntConfig,
     db::actor::spawn_db_actor,
     domain::dag::validate_dag_or_panic,
     state::AppState,
+    toasts::ToastRegistry,
 };
 
 #[tokio::main]
@@ -163,6 +166,7 @@ async fn main() -> anyhow::Result<()> {
         server_secret: Arc::new(server_secret.into_bytes()),
         jwt_secret: Arc::new(jwt_secret),
         allowed_origins: Arc::new(allowed_origins),
+        toasts: Arc::new(ToastRegistry::new("toasts.toml")),
     };
 
     tokio::spawn(async move {
@@ -188,7 +192,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/auth", auth_routes)
         .nest("/submit", submit_routes)
         .route("/ws/ticket", post(ws::issue_ticket))
-        .route("/ws", get(ws::ws_handler));
+        .route("/ws", get(ws::ws_handler))
+        .route("/admin/audit-ips", get(admin::audit_ips));
 
     let governor_conf = std::sync::Arc::new(
         GovernorConfigBuilder::default()

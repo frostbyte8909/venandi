@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT CAST(COALESCE(SUM(points_at_solve), 0) AS INTEGER) as \"score!: i64\"\n           FROM solves WHERE team_id = ?1",
+  "describe": {
+    "columns": [
+      {
+        "name": "score!: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "481b0b40a8107d109d287173d950d042af11be7401e33754dfada983da0e3ec0"
+}

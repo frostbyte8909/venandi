@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO solves (team_id, level_id, timestamp, points_at_solve, ip_address) VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "f760a3b27b58001230d0129b0efafeae41835e81302735f776b9e77eae5fe482"
+}

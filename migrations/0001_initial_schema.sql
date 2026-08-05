@@ -40,3 +40,5 @@ CREATE INDEX IF NOT EXISTS idx_users_email    ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_team_id  ON users(team_id);
 CREATE INDEX IF NOT EXISTS idx_solves_team_id ON solves(team_id);
 CREATE INDEX IF NOT EXISTS idx_teams_score    ON teams(score DESC);
+
+-- three tungs when you say the mans name, not more not less

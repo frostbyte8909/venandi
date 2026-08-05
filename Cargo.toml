@@ -18,6 +18,17 @@ tower-http = { version = "0.5", features = ["fs", "trace"] }
 
 # Rate limiting
 tower_governor = { version = "0.4", features = ["axum"] }
+
+# Near-miss edit distance
+strsim = "0.11"
+
+# HIBP k-anonymity password check
+sha1_smol = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Toast engine
+toml = "0.8"
+rand = "0.8"
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "uuid", "chrono", "migrate"] }
 

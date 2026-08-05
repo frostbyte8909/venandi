@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::Instant,
 };
 
@@ -9,7 +9,7 @@ use sqlx::SqlitePool;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-use crate::{bot::event_bus::DiscordEvent, config::HuntConfig, db::actor::DbCommand};
+use crate::{bot::event_bus::DiscordEvent, config::HuntConfig, db::actor::DbCommand, toasts::ToastRegistry};
 
 /// Ephemeral WebSocket upgrade ticket. Valid for 30s.
 #[derive(Debug, Clone)]
@@ -48,4 +48,7 @@ pub struct AppState {
 
     /// Allowed WebSocket origins.
     pub allowed_origins: Arc<HashSet<String>>,
+
+    /// Randomised response variants, reloadable at runtime.
+    pub toasts: Arc<ToastRegistry>,
 }
