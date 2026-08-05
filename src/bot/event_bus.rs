@@ -31,7 +31,7 @@ pub fn spawn_event_bus(
     http: std::sync::Arc<serenity::http::Http>,
     channel_id: u64,
 ) -> mpsc::Sender<DiscordEvent> {
-    let (tx, mut rx) = mpsc::channel::<DiscordEvent>(256);
+    let (tx, mut rx) = mpsc::channel::<DiscordEvent>(1000);
 
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {

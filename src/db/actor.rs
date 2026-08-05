@@ -41,10 +41,13 @@ pub enum DbCommand {
         email: String,
         password_hash: String,
     },
+    RevokeTokens {
+        user_id: Uuid,
+    },
 }
 
 pub fn spawn_db_actor(pool: SqlitePool) -> mpsc::Sender<DbCommand> {
-    let (tx, mut rx) = mpsc::channel::<DbCommand>(512);
+    let (tx, mut rx) = mpsc::channel::<DbCommand>(1000);
 
     tokio::spawn(async move {
         while let Some(cmd) = rx.recv().await {
@@ -220,6 +223,15 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
                 email,
                 password_hash,
                 now
+            )
+            .execute(pool)
+            .await?;
+        }
+        DbCommand::RevokeTokens { user_id } => {
+            let user_id_str = user_id.to_string();
+            sqlx::query!(
+                "UPDATE users SET token_version = token_version + 1 WHERE id = ?1",
+                user_id_str
             )
             .execute(pool)
             .await?;

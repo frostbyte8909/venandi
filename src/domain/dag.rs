@@ -1,21 +1,15 @@
 use crate::config::LevelConfig;
 use std::collections::{HashMap, HashSet, VecDeque};
 
-/// Result of evaluating a level's `unlock_condition` against a team's current
-/// state (set of solved level IDs and current score).
+/// Evaluation context representing a team's current state.
 #[derive(Debug, Clone)]
 pub struct EvalContext {
     pub solved: HashSet<String>,
     pub score: u64,
 }
 
-// ─── Kahn's Topological Sort ──────────────────────────────────────────────────
-
-/// Validates the level graph for cycles using Kahn's algorithm.
-/// **Panics** the process if a cycle is detected — this is intentional.
-/// The server must never boot with an invalid DAG configuration.
+/// Validates level graph using Kahn's algorithm. Panics on cycle detection to prevent invalid state.
 pub fn validate_dag_or_panic(levels: &[LevelConfig]) {
-    // Build adjacency list: prerequisite → dependents
     let mut in_degree: HashMap<&str, usize> = HashMap::new();
     let mut dependents: HashMap<&str, Vec<&str>> = HashMap::new();
 
@@ -28,7 +22,6 @@ pub fn validate_dag_or_panic(levels: &[LevelConfig]) {
         if level.unlock_condition == "START" {
             continue;
         }
-        // Extract referenced level IDs from the unlock_condition expression.
         let deps = extract_level_ids_from_condition(&level.unlock_condition, levels);
         for dep in deps {
             *in_degree.entry(level.id.as_str()).or_insert(0) += 1;
@@ -36,7 +29,6 @@ pub fn validate_dag_or_panic(levels: &[LevelConfig]) {
         }
     }
 
-    // Kahn's BFS
     let mut queue: VecDeque<&str> = in_degree
         .iter()
         .filter(|(_, &deg)| deg == 0)
@@ -70,17 +62,7 @@ pub fn validate_dag_or_panic(levels: &[LevelConfig]) {
     tracing::info!("DAG validation passed: {} levels, no cycles detected.", levels.len());
 }
 
-// ─── DAG Condition Evaluator (AST) ───────────────────────────────────────────
-
-/// Parses and evaluates a boolean `unlock_condition` expression against
-/// an `EvalContext`. Supports `AND`, `OR`, parentheses, level IDs,
-/// and the `team_score >= N` predicate.
-///
-/// Grammar (informal):
-///   expr   ::= term (OR term)*
-///   term   ::= factor (AND factor)*
-///   factor ::= '(' expr ')' | predicate
-///   predicate ::= level_id | 'team_score' '>=' number | 'START'
+/// Evaluates boolean condition AST against EvalContext.
 pub fn evaluate_condition(condition: &str, ctx: &EvalContext) -> bool {
     if condition.trim() == "START" {
         return true;
@@ -90,7 +72,7 @@ pub fn evaluate_condition(condition: &str, ctx: &EvalContext) -> bool {
     parse_expr(&tokens, &mut pos, ctx)
 }
 
-// ─── Private: Token Types ────────────────────────────────────────────────────
+
 
 #[derive(Debug, Clone, PartialEq)]
 enum Token {
@@ -141,7 +123,6 @@ fn tokenize(input: &str) -> Vec<Token> {
                     "AND" => tokens.push(Token::And),
                     "OR" => tokens.push(Token::Or),
                     _ => {
-                        // Could be a number or an identifier
                         if let Ok(n) = word.parse::<u64>() {
                             tokens.push(Token::Number(n));
                         } else {
@@ -186,7 +167,6 @@ fn parse_factor(tokens: &[Token], pos: &mut usize, ctx: &EvalContext) -> bool {
         Token::LParen => {
             *pos += 1;
             let result = parse_expr(tokens, pos, ctx);
-            // consume RParen
             if *pos < tokens.len() && tokens[*pos] == Token::RParen {
                 *pos += 1;
             }
@@ -195,7 +175,6 @@ fn parse_factor(tokens: &[Token], pos: &mut usize, ctx: &EvalContext) -> bool {
         Token::Ident(id) => {
             let id = id.clone();
             *pos += 1;
-            // Check for `team_score >= N` predicate
             if id == "team_score"
                 && *pos < tokens.len()
                 && tokens[*pos] == Token::Gte
@@ -208,15 +187,13 @@ fn parse_factor(tokens: &[Token], pos: &mut usize, ctx: &EvalContext) -> bool {
                 }
                 return false;
             }
-            // Otherwise treat as a level ID — true if the team has solved it.
             ctx.solved.contains(&id)
         }
         _ => false,
     }
 }
 
-/// Extracts referenced level IDs from a condition string for DAG construction.
-/// Does NOT parse the full grammar — only needs identifiers for cycle detection.
+/// Extracts level identifiers for cycle detection.
 fn extract_level_ids_from_condition<'a>(
     condition: &str,
     levels: &'a [LevelConfig],
@@ -239,7 +216,7 @@ fn extract_level_ids_from_condition<'a>(
         .collect()
 }
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
+
 
 #[cfg(test)]
 mod tests {
@@ -284,7 +261,6 @@ mod tests {
 
     #[test]
     fn test_complex_condition() {
-        // (lvl_1 AND lvl_2) OR team_score >= 300
         let c1 = ctx(&["lvl_1", "lvl_2"], 0);
         assert!(evaluate_condition("(lvl_1 AND lvl_2) OR team_score >= 300", &c1));
 

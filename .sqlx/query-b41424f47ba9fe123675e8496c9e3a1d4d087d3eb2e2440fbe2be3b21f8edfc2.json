@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id as \"id!\", team_id, email as \"email!\", password_hash as \"password_hash!\", role as \"role!\"\n           FROM users WHERE email = ?1",
+  "query": "SELECT id as \"id!\", team_id, email as \"email!\", password_hash as \"password_hash!\", role as \"role!\", token_version as \"token_version!\"\n           FROM users WHERE email = ?1",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,11 @@
         "name": "role!",
         "ordinal": 4,
         "type_info": "Text"
+      },
+      {
+        "name": "token_version!",
+        "ordinal": 5,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
@@ -37,8 +42,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "a8819a3708e277f37fb5b74b7906df74421bc99ec4f80e0f4d626dd5bb018dce"
+  "hash": "b41424f47ba9fe123675e8496c9e3a1d4d087d3eb2e2440fbe2be3b21f8edfc2"
 }

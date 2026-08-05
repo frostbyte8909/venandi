@@ -10,22 +10,17 @@ use uuid::Uuid;
 
 use crate::{error::AppError, state::AppState};
 
-/// JWT claims embedded in the HttpOnly cookie.
+/// JWT claims payload.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub user_id: Uuid,
     pub team_id: Option<Uuid>,
     pub role: String,
+    pub token_version: i64,
     pub exp: usize,
 }
 
-/// Authenticated user, extracted from the HttpOnly JWT cookie.
-/// Use this extractor in handlers that require authentication.
-///
-/// Fails with `AppError::Unauthorized` if:
-/// - The cookie is absent.
-/// - The JWT is expired or has an invalid signature.
-/// - The team is on the revocation blacklist.
+/// Requires authenticated JWT cookie. Validates signature, expiration, and revocation status.
 pub struct AuthUser(pub Claims);
 
 #[async_trait]
@@ -49,25 +44,27 @@ impl FromRequestParts<AppState> for AuthUser {
 
         let claims = token_data.claims;
 
-        // Check team revocation blacklist.
-        if let Some(team_id) = &claims.team_id {
-            let blacklisted = state
-                .revoked_teams
-                .read()
-                .map_err(|_| AppError::Internal(anyhow::anyhow!("RwLock poisoned")))?
-                .contains(&team_id.to_string());
+        // Verify token_version against database
+        let user_id_str = claims.user_id.to_string();
+        let current_version = sqlx::query!(
+            r#"SELECT token_version as "token_version!" FROM users WHERE id = ?1"#,
+            user_id_str
+        )
+        .fetch_optional(&state.read_pool)
+        .await
+        .map_err(|e| AppError::Internal(e.into()))?
+        .map(|r| r.token_version)
+        .unwrap_or(1);
 
-            if blacklisted {
-                return Err(AppError::Unauthorized);
-            }
+        if current_version != claims.token_version {
+            return Err(AppError::Unauthorized);
         }
 
         Ok(AuthUser(claims))
     }
 }
 
-/// Admin-only authenticated user.
-/// Rejects with `AppError::Forbidden` if the role is not `"admin"`.
+/// Requires authenticated JWT cookie with 'admin' role.
 pub struct AdminUser(pub Claims);
 
 #[async_trait]

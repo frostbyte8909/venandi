@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::error::AppError;
 
-/// Lightweight team record returned for leaderboard and status queries.
+/// Team leaderboard record.
 #[derive(Debug, Serialize)]
 pub struct TeamRow {
     pub id: String,
@@ -13,7 +13,7 @@ pub struct TeamRow {
     pub score: i64,
 }
 
-/// User record for authentication lookups.
+/// User authentication record.
 #[derive(Debug)]
 pub struct UserRow {
     pub id: String,
@@ -21,16 +21,17 @@ pub struct UserRow {
     pub email: String,
     pub password_hash: String,
     pub role: String,
+    pub token_version: i64,
 }
 
-/// Solve record.
+/// Team solve record.
 #[derive(Debug, Serialize)]
 pub struct SolveRow {
     pub level_id: String,
     pub timestamp: String,
 }
 
-/// Fetches top N teams ordered by score descending (for leaderboard).
+/// Returns top N teams by score descending.
 pub async fn get_leaderboard(pool: &SqlitePool, limit: i64) -> Result<Vec<TeamRow>, AppError> {
     let rows = sqlx::query!(
         r#"SELECT id as "id!", name as "name!", score as "score!" FROM teams ORDER BY score DESC LIMIT ?1"#,
@@ -44,7 +45,7 @@ pub async fn get_leaderboard(pool: &SqlitePool, limit: i64) -> Result<Vec<TeamRo
     Ok(rows)
 }
 
-/// Fetches a team by its ID.
+
 pub async fn get_team_by_id(pool: &SqlitePool, team_id: Uuid) -> Result<Option<TeamRow>, AppError> {
     let team_id_str = team_id.to_string();
     let row = sqlx::query!(
@@ -57,13 +58,13 @@ pub async fn get_team_by_id(pool: &SqlitePool, team_id: Uuid) -> Result<Option<T
     Ok(row)
 }
 
-/// Fetches a user by their email address.
+
 pub async fn get_user_by_email(
     pool: &SqlitePool,
     email: &str,
 ) -> Result<Option<UserRow>, AppError> {
     let row = sqlx::query!(
-        r#"SELECT id as "id!", team_id, email as "email!", password_hash as "password_hash!", role as "role!"
+        r#"SELECT id as "id!", team_id, email as "email!", password_hash as "password_hash!", role as "role!", token_version as "token_version!"
            FROM users WHERE email = ?1"#,
         email
     )
@@ -75,11 +76,12 @@ pub async fn get_user_by_email(
         email: r.email,
         password_hash: r.password_hash,
         role: r.role,
+        token_version: r.token_version,
     });
     Ok(row)
 }
 
-/// Checks whether a team has already solved a given level.
+
 pub async fn team_has_solved(
     pool: &SqlitePool,
     team_id: Uuid,
@@ -96,7 +98,7 @@ pub async fn team_has_solved(
     Ok(row.cnt > 0)
 }
 
-/// Returns all level IDs solved by a given team.
+
 pub async fn get_team_solves(
     pool: &SqlitePool,
     team_id: Uuid,
@@ -114,7 +116,7 @@ pub async fn get_team_solves(
     Ok(rows)
 }
 
-/// Returns the rank of a team (1-indexed, lower is better).
+/// Returns 1-indexed team rank.
 pub async fn get_team_rank(pool: &SqlitePool, team_id: Uuid) -> Result<i64, AppError> {
     let team_id_str = team_id.to_string();
     let row = sqlx::query!(

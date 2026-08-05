@@ -28,9 +28,7 @@ pub struct SubmitRequest {
 
 #[derive(Serialize)]
 pub struct SubmitResponse {
-    pub correct: bool,
-    pub first_blood: bool,
-    pub points_awarded: u32,
+    pub status: String,
     pub message: String,
 }
 
@@ -78,9 +76,7 @@ pub async fn submit(
 
     if solved_ids.contains(&level.id) {
         return Ok(Json(SubmitResponse {
-            correct: false,
-            first_blood: false,
-            points_awarded: 0,
+            status: "already_solved".into(),
             message: "Your team has already solved this level.".into(),
         }));
     }
@@ -98,47 +94,41 @@ pub async fn submit(
             .await;
 
         return Ok(Json(SubmitResponse {
-            correct: false,
-            first_blood: false,
-            points_awarded: 0,
+            status: "incorrect".into(),
             message: "Incorrect answer. Try again.".into(),
         }));
     }
 
     let (first_blood_tx, first_blood_rx) = oneshot::channel();
     
-    state
-        .db_tx
-        .send(DbCommand::RecordSolve {
+    // Spawn background side-effects to immediately release HTTP thread
+    tokio::spawn(async move {
+        if let Err(e) = state.db_tx.send(DbCommand::RecordSolve {
             team_id,
             level_id: level.id.clone(),
             points: level.points,
             first_blood_tx,
-        })
-        .await
-        .map_err(|e| AppError::Internal(e.into()))?;
+        }).await {
+            tracing::error!("Failed to record solve: {}", e);
+            return;
+        }
 
-    let first_blood = match first_blood_rx.await {
-        Ok(Ok(fb)) => fb,
-        Ok(Err(e)) => return Err(e),
-        Err(_) => return Err(AppError::Internal(anyhow::anyhow!("DB actor dropped"))),
-    };
-
-    if first_blood {
-        let _ = state
-            .discord_tx
-            .send(DiscordEvent::FirstBlood {
-                team_id,
-                level_id: level.id.clone(),
-                points: level.points,
-            })
-            .await;
-    }
+        match first_blood_rx.await {
+            Ok(Ok(true)) => {
+                let _ = state.discord_tx.send(DiscordEvent::FirstBlood {
+                    team_id,
+                    level_id: level.id.clone(),
+                    points: level.points,
+                }).await;
+            }
+            Ok(Err(e)) => tracing::error!("Database error during solve: {}", e),
+            Err(e) => tracing::error!("First blood channel dropped: {}", e),
+            _ => {}
+        }
+    });
 
     Ok(Json(SubmitResponse {
-        correct: true,
-        first_blood,
-        points_awarded: level.points,
+        status: "correct".into(),
         message: format!("Correct! +{} points.", level.points),
     }))
 }

@@ -16,8 +16,8 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal
 tower = "0.4"
 tower-http = { version = "0.5", features = ["fs", "trace"] }
 
-# Rate limiting (handled via reverse proxy in production)
-
+# Rate limiting
+tower_governor = { version = "0.4", features = ["axum"] }
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "uuid", "chrono", "migrate"] }
 

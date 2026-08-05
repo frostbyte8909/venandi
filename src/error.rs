@@ -6,9 +6,7 @@ use axum::{
 use serde_json::json;
 use thiserror::Error;
 
-/// Top-level application error. All variants produce a structured JSON response.
-/// Internal details (DB errors, crypto panics) are logged server-side and never
-/// forwarded to the client.
+/// Top-level application error. Produces structured JSON. Internal details are logged securely.
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Authentication required")]
@@ -26,8 +24,7 @@ pub enum AppError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
-    // Rate limit exceeded
-    // RateLimited removed as it is now handled at reverse proxy
+
 
     #[error("Internal server error")]
     Internal(#[from] anyhow::Error),
@@ -44,7 +41,7 @@ impl IntoResponse for AppError {
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             AppError::Conflict(_) => (StatusCode::CONFLICT, self.to_string()),
-            // Log internal and DB errors server-side; send generic message to client.
+
             AppError::Internal(e) => {
                 tracing::error!(error = %e, "Internal server error");
                 (

@@ -148,6 +148,7 @@ pub async fn login(
         user_id,
         team_id,
         role: user.role.clone(),
+        token_version: user.token_version,
         exp,
     };
 

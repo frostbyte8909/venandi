@@ -27,7 +27,8 @@ use dashmap::DashMap;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::time;
 use tower_http::trace::TraceLayer;
-use tracing::info;
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use tracing::{info, Level};
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
@@ -157,7 +158,7 @@ async fn main() -> anyhow::Result<()> {
         db_tx,
         discord_tx,
         ws_tickets: ws_tickets.clone(),
-        revoked_teams: Arc::new(RwLock::new(HashSet::new())),
+
         hunt: Arc::new(hunt),
         server_secret: Arc::new(server_secret.into_bytes()),
         jwt_secret: Arc::new(jwt_secret),
@@ -189,9 +190,20 @@ async fn main() -> anyhow::Result<()> {
         .route("/ws/ticket", post(ws::issue_ticket))
         .route("/ws", get(ws::ws_handler));
 
+    let governor_conf = std::sync::Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(2)
+            .burst_size(5)
+            .finish()
+            .unwrap(),
+    );
+
     let app = Router::new()
         .nest("/api", api_routes)
         .layer(DefaultBodyLimit::max(16_384))
+        .layer(GovernorLayer {
+            config: governor_conf,
+        })
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 

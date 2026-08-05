@@ -5,12 +5,9 @@ use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
 
-/// Generates the expected HMAC-SHA256 dynamic flag for a given level and team.
-///
+/// Generates HMAC-SHA256 dynamic flag.
 /// Formula: `HMAC-SHA256(server_secret, level_id + ":" + team_id)`
-///
-/// The output is a lowercase hex string (64 characters).
-/// The server secret is never embedded in the output.
+/// Output: lowercase 64-char hex string.
 pub fn generate_dynamic_flag(server_secret: &[u8], level_id: &str, team_id: Uuid) -> String {
     let mut mac =
         HmacSha256::new_from_slice(server_secret).expect("HMAC accepts any key length");
@@ -22,11 +19,7 @@ pub fn generate_dynamic_flag(server_secret: &[u8], level_id: &str, team_id: Uuid
     hex::encode(result)
 }
 
-/// Compares a user-submitted flag against the expected dynamic flag using
-/// **constant-time** comparison (via the `subtle` crate) to prevent timing
-/// oracle attacks.
-///
-/// Returns `true` only if the submission matches exactly.
+/// Constant-time HMAC-SHA256 verification via `subtle` crate to prevent timing oracles.
 pub fn verify_dynamic_flag(
     server_secret: &[u8],
     level_id: &str,
@@ -34,11 +27,10 @@ pub fn verify_dynamic_flag(
     submission: &str,
 ) -> bool {
     let expected = generate_dynamic_flag(server_secret, level_id, team_id);
-    // Convert to bytes for constant-time comparison.
     expected.as_bytes().ct_eq(submission.as_bytes()).into()
 }
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
+
 
 #[cfg(test)]
 mod tests {
