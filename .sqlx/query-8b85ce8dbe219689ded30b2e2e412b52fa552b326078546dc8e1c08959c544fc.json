@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE teams SET score = score + ?1 WHERE id = ?2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8b85ce8dbe219689ded30b2e2e412b52fa552b326078546dc8e1c08959c544fc"
+}

@@ -128,7 +128,7 @@ pub async fn login(
     })
     .await
     .map_err(|e| AppError::Internal(e.into()))?
-    .map_err(|e| AppError::Internal(e))?;
+    .map_err(AppError::Internal)?;
 
     if !valid {
         return Err(AppError::Unauthorized);

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT 1 as \"e!: bool\" FROM solves WHERE team_id = ?1 AND level_id = ?2",
+  "describe": {
+    "columns": [
+      {
+        "name": "e!: bool",
+        "ordinal": 0,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "7f1b13d3ee8fb6360321b6eaad63c9aac435eea13e33c122cbf7bf0427566f8b"
+}

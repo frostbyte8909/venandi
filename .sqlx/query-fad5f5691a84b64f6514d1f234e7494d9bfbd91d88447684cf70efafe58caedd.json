@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT COUNT(*) AS cnt FROM solves WHERE level_id = ?1",
+  "query": "SELECT COUNT(*) as cnt FROM solves WHERE level_id = ?1",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "6ea95163f703dcc8d828f8a06a97bab243ab691aaea1e264047059b779185dc2"
+  "hash": "fad5f5691a84b64f6514d1f234e7494d9bfbd91d88447684cf70efafe58caedd"
 }

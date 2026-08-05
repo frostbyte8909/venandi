@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports)]
 mod api;
 mod bot;
 mod config;
@@ -10,7 +11,6 @@ use std::{
     collections::HashSet,
     net::SocketAddr,
     sync::{Arc, RwLock},
-    num::NonZeroU32,
     time::Duration,
 };
 
@@ -23,7 +23,6 @@ use axum::{
     extract::DefaultBodyLimit,
     routing::{get, post},
 };
-use axum_governor::{GovernorConfigBuilder, GovernorLayer, extractor::PeerIp, Quota};
 use dashmap::DashMap;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::time;
@@ -63,7 +62,10 @@ async fn main() -> anyhow::Result<()> {
 
     validate_dag_or_panic(&hunt.levels);
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        tracing::error!("DATABASE_URL must be set");
+        std::process::exit(1);
+    });
 
     let pool_options = SqlitePoolOptions::new().max_connections(16);
     let connect_options: SqliteConnectOptions = database_url
@@ -110,9 +112,14 @@ async fn main() -> anyhow::Result<()> {
 
     let db_tx = spawn_db_actor(pool.clone());
 
-    let jwt_secret = std::env::var("VENANDI_JWT_SECRET").expect("VENANDI_JWT_SECRET must be set");
-    let server_secret = std::env::var("VENANDI_SERVER_SECRET")
-        .expect("VENANDI_SERVER_SECRET must be set");
+    let jwt_secret = std::env::var("VENANDI_JWT_SECRET").unwrap_or_else(|_| {
+        tracing::error!("VENANDI_JWT_SECRET must be set");
+        std::process::exit(1);
+    });
+    let server_secret = std::env::var("VENANDI_SERVER_SECRET").unwrap_or_else(|_| {
+        tracing::error!("VENANDI_SERVER_SECRET must be set");
+        std::process::exit(1);
+    });
 
     let allowed_origins: HashSet<String> = std::env::var("VENANDI_ALLOWED_ORIGINS")
         .unwrap_or_default()
@@ -123,8 +130,10 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Allowed WebSocket origins: {:?}", allowed_origins);
 
-    let discord_token = std::env::var("VENANDI_DISCORD_TOKEN")
-        .expect("VENANDI_DISCORD_TOKEN must be set");
+    let discord_token = std::env::var("VENANDI_DISCORD_TOKEN").unwrap_or_else(|_| {
+        tracing::error!("VENANDI_DISCORD_TOKEN must be set");
+        std::process::exit(1);
+    });
 
     let http = Arc::new(serenity::http::Http::new(&discord_token));
     let discord_channel_id: u64 = std::env::var("VENANDI_DISCORD_CHANNEL_ID")
@@ -164,37 +173,20 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    let auth_quota = Quota::per_minute(NonZeroU32::new(5).unwrap());
-    let auth_governor_conf = GovernorConfigBuilder::default()
-        .with_extractor(PeerIp::default())
-        .expect_connect_info()
-        .quota_default(auth_quota)
-        .finish()
-        .unwrap();
-
-    let submit_quota = Quota::per_second(NonZeroU32::new(1).unwrap())
-        .allow_burst(NonZeroU32::new(10).unwrap());
-    let submit_governor_conf = GovernorConfigBuilder::default()
-        .with_extractor(PeerIp::default())
-        .expect_connect_info()
-        .quota_default(submit_quota)
-        .finish()
-        .unwrap();
+    // Rate limiting configured at the reverse proxy level.
 
     let auth_routes = Router::new()
         .route("/register", post(auth::register))
         .route("/login", post(auth::login))
-        .route("/logout", post(auth::logout))
-        .layer(GovernorLayer::new(auth_governor_conf));
+        .route("/logout", post(auth::logout));
 
     let submit_routes = Router::new()
-        .route("/", post(submit::submit))
-        .layer(GovernorLayer::new(submit_governor_conf));
+        .route("/", post(submit::submit));
 
     let api_routes = Router::new()
         .nest("/auth", auth_routes)
         .nest("/submit", submit_routes)
-        .route("/ws/ticket", post(ws::request_ticket))
+        .route("/ws/ticket", post(ws::issue_ticket))
         .route("/ws", get(ws::ws_handler));
 
     let app = Router::new()
@@ -206,7 +198,10 @@ async fn main() -> anyhow::Result<()> {
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let addr = format!("0.0.0.0:{}", port)
         .parse::<SocketAddr>()
-        .expect("Invalid PORT or bind address");
+        .unwrap_or_else(|_| {
+            tracing::error!("Invalid PORT or bind address");
+            std::process::exit(1);
+        });
 
     info!("Starting server on {}", addr);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

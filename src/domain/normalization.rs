@@ -1,4 +1,4 @@
-use once_cell::sync::Lazy;
+use std::sync::OnceLock;
 use regex::Regex;
 
 /// Pre-compiled regex for stripping all characters that are not ASCII
@@ -6,9 +6,8 @@ use regex::Regex;
 /// Compiled once at startup; zero allocation on every call thereafter.
 ///
 /// Finite automaton guarantees O(n) execution — ReDoS is structurally impossible.
-static WHITESPACE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
-static NON_PRINTABLE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"[^\x20-\x7E]").unwrap());
+static WHITESPACE_RE: OnceLock<Regex> = OnceLock::new();
+static NON_PRINTABLE_RE: OnceLock<Regex> = OnceLock::new();
 
 /// Normalizes a Cryptic Hunt answer for comparison:
 /// 1. Strips leading/trailing whitespace.
@@ -18,10 +17,13 @@ static NON_PRINTABLE_RE: Lazy<Regex> =
 ///
 /// This ensures "  The  ANSWER  " matches "the answer".
 pub fn normalize_answer(raw: &str) -> String {
+    let ws_re = WHITESPACE_RE.get_or_init(|| Regex::new(r"\s+").expect("Invalid regex"));
+    let np_re = NON_PRINTABLE_RE.get_or_init(|| Regex::new(r"[^\x20-\x7E]").expect("Invalid regex"));
+    
     // Remove non-printable chars first.
-    let cleaned = NON_PRINTABLE_RE.replace_all(raw, "");
+    let cleaned = np_re.replace_all(raw, "");
     // Collapse whitespace runs.
-    let collapsed = WHITESPACE_RE.replace_all(cleaned.trim(), " ");
+    let collapsed = ws_re.replace_all(cleaned.trim(), " ");
     collapsed.to_lowercase()
 }
 

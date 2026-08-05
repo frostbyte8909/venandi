@@ -26,8 +26,8 @@ pub enum AppError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
-    #[error("Rate limit exceeded")]
-    RateLimited,
+    // Rate limit exceeded
+    // RateLimited removed as it is now handled at reverse proxy
 
     #[error("Internal server error")]
     Internal(#[from] anyhow::Error),
@@ -43,8 +43,7 @@ impl IntoResponse for AppError {
             AppError::Forbidden => (StatusCode::FORBIDDEN, self.to_string()),
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
-            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg.clone()),
-            AppError::RateLimited => (StatusCode::TOO_MANY_REQUESTS, self.to_string()),
+            AppError::Conflict(_) => (StatusCode::CONFLICT, self.to_string()),
             // Log internal and DB errors server-side; send generic message to client.
             AppError::Internal(e) => {
                 tracing::error!(error = %e, "Internal server error");

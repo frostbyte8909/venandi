@@ -109,7 +109,7 @@ async fn handle_socket(mut socket: WebSocket, team_id: Uuid, user_id: Uuid) {
     });
 
     if socket
-        .send(Message::Text(welcome.to_string().into()))
+        .send(Message::Text(welcome.to_string()))
         .await
         .is_err()
     {

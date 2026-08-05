@@ -137,7 +137,7 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
             let points_i64 = points as i64;
 
             let existing = sqlx::query!(
-                "SELECT 1 as e FROM solves WHERE team_id = ?1 AND level_id = ?2",
+                "SELECT 1 as \"e!: bool\" FROM solves WHERE team_id = ?1 AND level_id = ?2",
                 team_id_str, level_id
             ).fetch_optional(pool).await;
 
