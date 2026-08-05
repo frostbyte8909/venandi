@@ -3231,6 +3231,7 @@ dependencies = [
  "hex",
  "hmac",
  "jsonwebtoken",
+ "libc",
  "once_cell",
  "poise",
  "regex",

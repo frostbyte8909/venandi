@@ -12,3 +12,4 @@
 /static/
 
 # NOTE: .sqlx/ is intentionally NOT ignored — commit it for SQLX_OFFLINE CI builds
+archived_cp/

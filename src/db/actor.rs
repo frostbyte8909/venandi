@@ -1,21 +1,19 @@
 use anyhow::Result;
 use chrono::Utc;
 use sqlx::SqlitePool;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 use tracing::{error, warn};
 use uuid::Uuid;
 
-/// Commands that can be sent to the single-writer SQLite actor.
-/// Each variant carries all data needed to perform the mutation.
-/// The actor owns the write connection and processes commands sequentially,
-/// ensuring SQLite never sees concurrent writers.
-#[derive(Debug)]
+use crate::error::AppError;
+
 pub enum DbCommand {
     CreateUser {
         id: Uuid,
         email: String,
         password_hash: String,
         role: String,
+        result_tx: oneshot::Sender<Result<(), AppError>>,
     },
     SetUserTeam {
         user_id: Uuid,
@@ -31,6 +29,7 @@ pub enum DbCommand {
         team_id: Uuid,
         level_id: String,
         points: u32,
+        first_blood_tx: oneshot::Sender<Result<bool, AppError>>,
     },
     WriteAuditLog {
         team_id: Option<Uuid>,
@@ -44,11 +43,6 @@ pub enum DbCommand {
     },
 }
 
-/// Spawns the single-writer SQLite actor as a background Tokio task.
-/// Returns an `mpsc::Sender` that callers use to enqueue mutations.
-///
-/// The actor processes one command at a time, preventing `SQLITE_BUSY` errors
-/// under high write concurrency.
 pub fn spawn_db_actor(pool: SqlitePool) -> mpsc::Sender<DbCommand> {
     let (tx, mut rx) = mpsc::channel::<DbCommand>(512);
 
@@ -73,9 +67,10 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
             email,
             password_hash,
             role,
+            result_tx,
         } => {
             let id_str = id.to_string();
-            sqlx::query!(
+            let res = sqlx::query!(
                 r#"INSERT INTO users (id, email, password_hash, role, created_at)
                    VALUES (?1, ?2, ?3, ?4, ?5)"#,
                 id_str,
@@ -85,7 +80,19 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
                 now
             )
             .execute(pool)
-            .await?;
+            .await;
+
+            let final_res = match res {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    if e.to_string().contains("UNIQUE constraint failed") {
+                        Err(AppError::Conflict("Email already registered.".into()))
+                    } else {
+                        Err(AppError::Database(e))
+                    }
+                }
+            };
+            let _ = result_tx.send(final_res);
         }
 
         DbCommand::SetUserTeam { user_id, team_id } => {
@@ -124,33 +131,60 @@ async fn handle_command(pool: &SqlitePool, cmd: DbCommand) -> Result<()> {
             team_id,
             level_id,
             points,
+            first_blood_tx,
         } => {
             let team_id_str = team_id.to_string();
             let points_i64 = points as i64;
 
-            // Insert the solve record and atomically update team score.
-            sqlx::query!(
-                r#"INSERT OR IGNORE INTO solves (team_id, level_id, timestamp)
-                   VALUES (?1, ?2, ?3)"#,
-                team_id_str,
-                level_id,
-                now
-            )
-            .execute(pool)
-            .await?;
+            let existing = sqlx::query!(
+                "SELECT 1 as e FROM solves WHERE team_id = ?1 AND level_id = ?2",
+                team_id_str, level_id
+            ).fetch_optional(pool).await;
 
-            // Update score only if the row was newly inserted.
-            // We check by looking up the specific solve with this exact timestamp.
-            sqlx::query!(
-                "UPDATE teams SET score = score + ?1 WHERE id = ?2 AND \
-                 EXISTS (SELECT 1 FROM solves WHERE team_id = ?2 AND level_id = ?3 AND timestamp = ?4)",
-                points_i64,
-                team_id_str,
-                level_id,
-                now
-            )
-            .execute(pool)
-            .await?;
+            match existing {
+                Ok(Some(_)) => {
+                    let _ = first_blood_tx.send(Ok(false));
+                }
+                Err(e) => {
+                    let _ = first_blood_tx.send(Err(AppError::Database(e)));
+                }
+                Ok(None) => {
+                    let prior = sqlx::query!(
+                        "SELECT COUNT(*) as cnt FROM solves WHERE level_id = ?1",
+                        level_id
+                    ).fetch_one(pool).await;
+
+                    match prior {
+                        Ok(prior_row) => {
+                            let insert_res = sqlx::query!(
+                                "INSERT INTO solves (team_id, level_id, timestamp) VALUES (?1, ?2, ?3)",
+                                team_id_str, level_id, now
+                            ).execute(pool).await;
+
+                            match insert_res {
+                                Ok(_) => {
+                                    let update_res = sqlx::query!(
+                                        "UPDATE teams SET score = score + ?1 WHERE id = ?2",
+                                        points_i64, team_id_str
+                                    ).execute(pool).await;
+
+                                    if let Err(e) = update_res {
+                                        let _ = first_blood_tx.send(Err(AppError::Database(e)));
+                                    } else {
+                                        let _ = first_blood_tx.send(Ok(prior_row.cnt == 0));
+                                    }
+                                }
+                                Err(e) => {
+                                    let _ = first_blood_tx.send(Err(AppError::Database(e)));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            let _ = first_blood_tx.send(Err(AppError::Database(e)));
+                        }
+                    }
+                }
+            }
         }
 
         DbCommand::WriteAuditLog {
