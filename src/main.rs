@@ -83,6 +83,8 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!("./migrations").run(&pool).await?;
     info!("Database migrations applied.");
 
+// six seven
+
     if let (Ok(admin_email), Ok(admin_password)) = (
         std::env::var("VENANDI_INITIAL_ADMIN_EMAIL"),
         std::env::var("VENANDI_INITIAL_ADMIN_PASSWORD"),
